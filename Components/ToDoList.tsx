@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { BsTrashFill, BsCheckLg } from 'react-icons/bs';
 import styled from 'styled-components';
+import { checkTodoAPI, deleteTodoAPI } from '../lib/api/todo';
 import palette from '../styles/palette';
 import { ToDoType } from '../types/todo';
 
@@ -105,11 +106,14 @@ const Item = styled.li`
       border: 1px solid ${palette.gray};
       background-color: transparent;
       outline: none;
+      cursor: pointer;
     }
   }
 `;
 
 const ToDoList = ({ todos }: IProps) => {
+  const [localTodos, setLocalTodos] = useState(todos);
+
   const getTodoColorNums = useCallback(() => {
     let red = 0;
     let orange = 0;
@@ -118,7 +122,7 @@ const ToDoList = ({ todos }: IProps) => {
     let blue = 0;
     let navy = 0;
 
-    todos.forEach((todo) => {
+    localTodos.forEach((todo) => {
       switch (todo.color) {
         case 'red':
           red += 1;
@@ -155,11 +159,36 @@ const ToDoList = ({ todos }: IProps) => {
 
   const todoColorNums = useMemo(getTodoColorNums, [todos]);
 
+  const checkTodo = async (id: number) => {
+    try {
+      await checkTodoAPI(id);
+      const newTodos = localTodos.map((todo) => {
+        if (todo.id === id) {
+          return { ...todo, checked: !todo.checked };
+        }
+        return todo;
+      });
+      setLocalTodos(newTodos);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const deleteTodo = async (id: number) => {
+    try {
+      await deleteTodoAPI(id);
+      const newTodos = localTodos.filter((todo) => todo.id !== id);
+      setLocalTodos(newTodos);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   return (
     <Container>
       <Header>
         <LastToDo>
-          남은 TODO<span>{todos.length}개</span>
+          남은 TODO<span>{localTodos.length}개</span>
         </LastToDo>
         <div className="list-header-colors">
           {Object.keys(todoColorNums).map((color, index) => (
@@ -171,7 +200,7 @@ const ToDoList = ({ todos }: IProps) => {
         </div>
       </Header>
       <List>
-        {todos.map((todo) => (
+        {localTodos.map((todo) => (
           <Item key={todo.id}>
             <div className="left-side">
               <div className={`color-block bg-${todo.color}`} />
@@ -182,11 +211,27 @@ const ToDoList = ({ todos }: IProps) => {
             <div className="right-side">
               {todo.checked ? (
                 <>
-                  <BsTrashFill className="trash-can" onClick={() => {}} />
-                  <BsCheckLg className="check-mark" onClick={() => {}} />
+                  <BsTrashFill
+                    className="trash-can"
+                    onClick={() => {
+                      deleteTodo(todo.id);
+                    }}
+                  />
+                  <BsCheckLg
+                    className="check-mark"
+                    onClick={() => {
+                      checkTodo(todo.id);
+                    }}
+                  />
                 </>
               ) : (
-                <button type="button" className="button" onClick={() => {}} />
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => {
+                    checkTodo(todo.id);
+                  }}
+                />
               )}
             </div>
           </Item>
