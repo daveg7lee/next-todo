@@ -1,13 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import { BsTrashFill, BsCheckLg } from 'react-icons/bs';
+import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { checkTodoAPI, deleteTodoAPI } from '../lib/api/todo';
+import { todoActions } from '../store/todo';
 import palette from '../styles/palette';
-import { ToDoType } from '../types/todo';
-
-interface IProps {
-  todos: ToDoType[];
-}
 
 const Container = styled.div`
   width: 100%;
@@ -111,8 +108,9 @@ const Item = styled.li`
   }
 `;
 
-const ToDoList = ({ todos }: IProps) => {
-  const [localTodos, setLocalTodos] = useState(todos);
+const ToDoList = () => {
+  const todos = useSelector((state) => state.todo.todos);
+  const dispatch = useDispatch();
 
   const getTodoColorNums = useCallback(() => {
     let red = 0;
@@ -122,7 +120,7 @@ const ToDoList = ({ todos }: IProps) => {
     let blue = 0;
     let navy = 0;
 
-    localTodos.forEach((todo) => {
+    todos.forEach((todo) => {
       switch (todo.color) {
         case 'red':
           red += 1;
@@ -162,13 +160,13 @@ const ToDoList = ({ todos }: IProps) => {
   const checkTodo = async (id: number) => {
     try {
       await checkTodoAPI(id);
-      const newTodos = localTodos.map((todo) => {
+      const newTodos = todos.map((todo) => {
         if (todo.id === id) {
           return { ...todo, checked: !todo.checked };
         }
         return todo;
       });
-      setLocalTodos(newTodos);
+      dispatch(todoActions.setTodo(newTodos));
     } catch (e) {
       console.log(e);
     }
@@ -177,8 +175,8 @@ const ToDoList = ({ todos }: IProps) => {
   const deleteTodo = async (id: number) => {
     try {
       await deleteTodoAPI(id);
-      const newTodos = localTodos.filter((todo) => todo.id !== id);
-      setLocalTodos(newTodos);
+      const newTodos = todos.filter((todo) => todo.id !== id);
+      dispatch(todoActions.setTodo(newTodos));
     } catch (e) {
       console.log(e);
     }
@@ -188,7 +186,7 @@ const ToDoList = ({ todos }: IProps) => {
     <Container>
       <Header>
         <LastToDo>
-          남은 TODO<span>{localTodos.length}개</span>
+          남은 TODO<span>{todos.length}개</span>
         </LastToDo>
         <div className="list-header-colors">
           {Object.keys(todoColorNums).map((color, index) => (
@@ -200,7 +198,7 @@ const ToDoList = ({ todos }: IProps) => {
         </div>
       </Header>
       <List>
-        {localTodos.map((todo) => (
+        {todos.map((todo) => (
           <Item key={todo.id}>
             <div className="left-side">
               <div className={`color-block bg-${todo.color}`} />

@@ -3,14 +3,9 @@ import ToDoList from '../Components/ToDoList';
 import { getTodosAPI } from '../lib/api/todo';
 import { wrapper } from '../store';
 import { todoActions } from '../store/todo';
-import { ToDoType } from '../types/todo';
 
-interface IProps {
-  todos: ToDoType[];
-}
-
-const index: NextPage<IProps> = ({ todos }) => {
-  return <ToDoList todos={todos} />;
+const index: NextPage = () => {
+  return <ToDoList />;
 };
 
 export const getServerSideProps = wrapper.getServerSideProps(
@@ -18,10 +13,10 @@ export const getServerSideProps = wrapper.getServerSideProps(
     try {
       const { data } = await getTodosAPI();
       store.dispatch(todoActions.setTodo(data));
-      return { props: { todos: data } };
+      return { props: {} };
     } catch (e) {
       console.log(e);
-      return { props: { todos: [] } };
+      return { props: {} };
     }
   }
 );
